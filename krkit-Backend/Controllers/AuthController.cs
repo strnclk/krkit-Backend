@@ -27,13 +27,13 @@ namespace krkit_Backend.Controllers
 
             // Token oluşturma
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes("MySuperSecretKey123!");
+            var key = Encoding.UTF8.GetBytes("MySuperSecretKey12345678901234567890123456789012!"); // 256-bit anahtar
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Name, user.Username)
-                }),
+            new Claim(ClaimTypes.Name, user.Username)
+        }),
                 Expires = DateTime.UtcNow.AddHours(1), // Token süresi
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
@@ -41,10 +41,10 @@ namespace krkit_Backend.Controllers
                 Audience = "krkit-backend"
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
+            var tokenString = tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
 
             return Ok(new { Token = tokenString });
         }
+
     }
 }
