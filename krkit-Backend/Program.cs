@@ -1,10 +1,17 @@
+using krkit_Backend.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Veritabaný baðlantýsýný yapýyoruz
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Diðer servisleri ekliyoruz
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Swagger ayarlarýna Bearer Token ekliyoruz.
+// Swagger ayarlarýna Bearer Token ekliyoruz
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -35,7 +42,7 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// HTTP isteði iþleme hattýný yapýlandýrýyoruz
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
