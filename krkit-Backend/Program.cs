@@ -1,17 +1,45 @@
+ï»¿using System.Text;
 using krkit_Backend.Data;
+using krkit_Backend.Data.GenericRepository;
+using krkit_Backend.Data.UnitOfWork;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Veritabaný baðlantýsýný yapýyoruz
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+// VeritabanÃ½ baÃ°lantÃ½sÃ½nÃ½ yapÃ½yoruz
+builder.Services.AddDbContext<KrKitDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Diðer servisleri ekliyoruz
+// Repository ve UnitOfWork baÄŸÄ±mlÄ±lÄ±klarÄ±nÄ± ekleyelim
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// JWT Authentication yapÄ±landÄ±rmasÄ±nÄ± ekliyoruz
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Issuer adresini buraya yazÄ±n
+            ValidAudience = builder.Configuration["Jwt:Audience"], // Audience adresini buraya yazÄ±n
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])) // AnahtarÄ±nÄ±zÄ± burada kullanÄ±n
+        };
+ 
+    });
+
+// DiÄŸer servisleri ekliyoruz
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Swagger ayarlarýna Bearer Token ekliyoruz
+
+
+// Swagger ayarlarÄ±na Bearer token'Ä± ekliyoruz
+// Swagger ayarlarÄ±na Bearer token'Ä± ekliyoruz
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -21,7 +49,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "JWT Bearer token ile API'ye eriþim (örnek: 'Bearer <token>')"
+        Description = "Bearer YAZMA Direk YAZ"
     });
 
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
@@ -40,20 +68,23 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+
+
 var app = builder.Build();
 
-// HTTP isteði iþleme hattýný yapýlandýrýyoruz
+// HTTP isteÃ°i iÃ¾leme hattÃ½nÃ½ yapÃ½landÃ½rÃ½yoruz
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-        c.RoutePrefix = string.Empty; // Swagger ana URL üzerinde çalýþýr
+        c.RoutePrefix = string.Empty; // Swagger ana URL Ã¼zerinde Ã§alÃ½Ã¾Ã½r
     });
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication(); 
 app.UseAuthorization();
 app.MapControllers();
 

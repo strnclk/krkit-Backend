@@ -1,8 +1,7 @@
-﻿namespace krkit_Backend.Models
+﻿namespace krkit_Backend.Data.Models
 {
-    public class ToDoList
+    public class ToDoList : BaseEntity
     {
-        public int Id { get; set; } // Görev ID
         public string Title { get; set; } // Görev Başlığı
         public string Description { get; set; } // Görev Açıklaması
         public bool IsCompleted { get; set; } = false; // Görev tamamlandı mı?

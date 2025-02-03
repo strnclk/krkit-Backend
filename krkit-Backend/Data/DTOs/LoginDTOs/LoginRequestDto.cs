@@ -1,6 +1,6 @@
-﻿namespace krkit_Backend.Models
+﻿namespace krkit_Backend.Data.Models.DTOs
 {
-    public class LoginRequest
+    public class LoginRequestDto
     {
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;

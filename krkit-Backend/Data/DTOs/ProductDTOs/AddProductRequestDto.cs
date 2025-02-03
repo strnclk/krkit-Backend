@@ -1,8 +1,7 @@
-﻿namespace krkit_Backend.Models
+﻿namespace krkit_Backend.Data.DTOs.ProductDTOs
 {
-    public class Product
+    public class AddProductRequestDto
     {
-        public int Id { get; set; }          // Ürün ID'si
         public string CompanyName { get; set; } // Firma ismi
         public string Description { get; set; } // Açıklama
         public decimal Price { get; set; }    // Ürün fiyatı

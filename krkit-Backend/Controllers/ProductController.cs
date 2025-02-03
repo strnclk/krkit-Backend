@@ -1,89 +1,116 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using krkit_Backend.Models;
-using System.Collections.Generic;
-using System.Linq;
+using krkit_Backend.Data.Models;
+using krkit_Backend.Data.UnitOfWork;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using krkit_Backend.Data.DTOs.ProductDTOs;
 
 namespace krkit_Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ProductController : ControllerBase
     {
-        // Ürünleri tutan örnek bir liste
-        private static List<Product> Products = new List<Product>
+        private readonly IUnitOfWork _unitOfWork;
+
+        public ProductController(IUnitOfWork unitOfWork)
         {
-            new Product { CompanyName = "Firma 1", Description = "Açıklama 1", Price = 100.00m, Quantity = 10, Barcode = "123456" },
-            new Product { CompanyName = "Firma 2", Description = "Açıklama 2", Price = 200.00m, Quantity = 20, Barcode = "654321" }
-        };
+            _unitOfWork = unitOfWork;
+        }
 
         // Ürünleri listeleme (GET)
         [HttpGet]
-        public IActionResult GetAllProducts()
+        public async Task<IActionResult> GetAllProducts()
         {
-            return Ok(Products);
+            var products = await _unitOfWork.Products.GetAllAsync();
+            return Ok(products);
         }
 
         // Ürün ekleme (POST)
         [HttpPost("add")]
-        public IActionResult AddProduct([FromBody] Product product)
+        public async Task<IActionResult> AddProduct([FromBody] AddProductRequestDto productRequest)
         {
-            if (product == null || string.IsNullOrEmpty(product.CompanyName) || product.Price <= 0 || product.Quantity <= 0 || string.IsNullOrEmpty(product.Barcode))
+            if (productRequest == null || string.IsNullOrEmpty(productRequest.CompanyName) ||
+                productRequest.Price <= 0 || productRequest.Quantity <= 0 || string.IsNullOrEmpty(productRequest.Barcode))
             {
                 return BadRequest("Geçerli firma ismi, açıklama, fiyat, adet ve barkod numarası girin.");
             }
 
             // Aynı Barkod numarasına sahip bir ürün var mı kontrol edelim
-            if (Products.Any(p => p.Barcode == product.Barcode))
+            var existingProduct = await _unitOfWork.Products.FindAsync(p => p.Barcode == productRequest.Barcode);
+            if (existingProduct.Any())
             {
                 return BadRequest("Bu barkod numarasına sahip bir ürün zaten mevcut.");
             }
 
+            // DTO'dan Entity'ye dönüşüm
+            var newProduct = new Product
+            {
+                CompanyName = productRequest.CompanyName,
+                Description = productRequest.Description,
+                Price = productRequest.Price,
+                Quantity = productRequest.Quantity,
+                Barcode = productRequest.Barcode,
+                IsDeleted = false // Varsayılan olarak silinmemiş
+            };
+
             // Yeni ürün ekleme
-            Products.Add(product);
-            return CreatedAtAction(nameof(GetProductByBarcode), new { barcode = product.Barcode }, product);
+            await _unitOfWork.Products.AddAsync(newProduct);
+            await _unitOfWork.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetProductByBarcode), new { barcode = newProduct.Barcode }, newProduct);
         }
+
 
         // Belirli bir ürünü barkod numarasına göre getirme (GET)
         [HttpGet("select")]
-        public IActionResult GetProductByBarcode(string barcode)
+        public async Task<IActionResult> GetProductByBarcode(string barcode)
         {
-            var product = Products.FirstOrDefault(p => p.Barcode == barcode);
-            if (product == null)
+            var product = await _unitOfWork.Products.FindAsync(p => p.Barcode == barcode);
+            var productResult = product.FirstOrDefault();
+
+            if (productResult == null)
                 return NotFound("Ürün bulunamadı.");
 
-            return Ok(product);
+            return Ok(productResult);
         }
 
         // Ürün güncelleme (PUT)
         [HttpPut("update")]
-        public IActionResult UpdateProduct([FromBody] Product updatedProduct)
+        public async Task<IActionResult> UpdateProduct([FromBody] UpdateProductRequestDto updateProductRequest)
         {
-            var product = Products.FirstOrDefault(p => p.Barcode == updatedProduct.Barcode);
+            // Veritabanından güncellenmek istenen ürünü alıyoruz
+            var product = await _unitOfWork.Products.GetByIdAsync(updateProductRequest.Id);
             if (product == null)
                 return NotFound("Ürün bulunamadı.");
 
-            // Güncellenen bilgileri atama
-            product.CompanyName = updatedProduct.CompanyName;
-            product.Description = updatedProduct.Description;
-            product.Price = updatedProduct.Price;
-            product.Quantity = updatedProduct.Quantity;
-            return Ok(product);
+            // DTO'dan gelen veriyi entity'e manuel olarak aktarıyoruz
+            product.CompanyName = updateProductRequest.CompanyName;
+            product.Description = updateProductRequest.Description;
+            product.Price = updateProductRequest.Price;
+            product.Quantity = updateProductRequest.Quantity;
+            product.Barcode = updateProductRequest.Barcode;
+
+            // Ürünü güncelliyoruz
+            await _unitOfWork.Products.UpdateAsync(product);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Ok(product); // Güncellenen ürünü döndürüyoruz
         }
 
-        // Ürün silme (DELETE)
+
         // Ürün silme (DELETE)
         [HttpDelete("delete/{id}")]
-        public IActionResult DeleteProduct(int id)
+        public async Task<IActionResult> DeleteProduct(int id)
         {
-            // İlgili ID'ye sahip ürünü bul
-            var product = Products.FirstOrDefault(p => p.Id == id);
+            var product = await _unitOfWork.Products.GetByIdAsync(id);
             if (product == null)
                 return NotFound("Ürün bulunamadı.");
 
-            // Ürünü listeden silme
-            Products.Remove(product);
+            await _unitOfWork.Products.DeleteAsync(id);
+            await _unitOfWork.SaveChangesAsync();
             return NoContent();
         }
-
     }
 }
