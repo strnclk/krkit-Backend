@@ -12,7 +12,7 @@ namespace krkit_Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [AllowAnonymous]
     public class ToDoController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -30,7 +30,7 @@ namespace krkit_Backend.Controllers
             var tasks = await _unitOfWork.ToDoLists.GetAllAsync();
             if (tasks == null || !tasks.Any())
             {
-                return NotFound("Görev bulunamadı.");
+                return Ok(tasks);
             }
 
             return Ok(tasks);
@@ -70,10 +70,10 @@ namespace krkit_Backend.Controllers
         }
 
         // Görev güncelleme (PUT)
-        [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateTask(int id, [FromBody] UpdateToDoItemDto updatedTask)
+        [HttpPut("update")]
+        public async Task<IActionResult> UpdateTask(UpdateToDoItemDto updatedTask)
         {
-            var task = await _unitOfWork.ToDoLists.GetByIdAsync(id);
+            var task = await _unitOfWork.ToDoLists.GetByIdAsync(updatedTask.Id);
             if (task == null)
                 return NotFound("Görev bulunamadı.");
 
@@ -86,15 +86,15 @@ namespace krkit_Backend.Controllers
         }
 
         // Görev silme (DELETE)
-        [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteTask(int id)
+        [HttpDelete("delete")]
+        public async Task<IActionResult> DeleteTask(DeleteToDoItemDto dto)
         {
-            var task = await _unitOfWork.ToDoLists.GetByIdAsync(id);
+            var task = await _unitOfWork.ToDoLists.GetByIdAsync(dto.Id);
             if (task == null)
                 return NotFound("Görev bulunamadı.");
 
-            await _unitOfWork.ToDoLists.DeleteAsync(id);
-            return NoContent();
+            await _unitOfWork.ToDoLists.DeleteAsync(dto.Id);
+            return Ok(dto);
         }
     }
 }

@@ -28,7 +28,7 @@ namespace krkit_Backend.Controllers
         }
 
         // Ürün ekleme (POST)
-        [HttpPost("add")]
+            [HttpPost("add")]
         public async Task<IActionResult> AddProduct([FromBody] AddProductRequestDto productRequest)
         {
             if (productRequest == null || string.IsNullOrEmpty(productRequest.CompanyName) ||
@@ -78,7 +78,7 @@ namespace krkit_Backend.Controllers
 
         // Ürün güncelleme (PUT)
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateProduct([FromBody] UpdateProductRequestDto updateProductRequest)
+        public async Task<IActionResult> UpdateProduct( UpdateProductRequestDto updateProductRequest)
         {
             // Veritabanından güncellenmek istenen ürünü alıyoruz
             var product = await _unitOfWork.Products.GetByIdAsync(updateProductRequest.Id);

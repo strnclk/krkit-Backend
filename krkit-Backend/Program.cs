@@ -8,6 +8,17 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Veritabaný baðlantýsýný yapýyoruz
 builder.Services.AddDbContext<KrKitDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -82,6 +93,11 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = string.Empty; // Swagger ana URL üzerinde çalýþýr
     });
 }
+
+
+app.UseCors("AllowAll"); // CORS Middleware'i burada çalışmalı
+
+
 
 app.UseHttpsRedirection();
 app.UseAuthentication(); 
