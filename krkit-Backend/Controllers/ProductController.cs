@@ -8,8 +8,8 @@ using krkit_Backend.Data.DTOs.ProductDTOs;
 namespace krkit_Backend.Controllers
 {
     [Route("api/[controller]")]
-    [ApiController]
-    [Authorize]
+     [ApiController]
+    [AllowAnonymous]
     public class ProductController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
