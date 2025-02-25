@@ -12,7 +12,7 @@ namespace krkit_Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [AllowAnonymous]
+    [Authorize]
     public class ToDoController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;

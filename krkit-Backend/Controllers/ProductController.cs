@@ -9,7 +9,7 @@ namespace krkit_Backend.Controllers
 {
     [Route("api/[controller]")]
      [ApiController]
-    [AllowAnonymous]
+    [Authorize]
     public class ProductController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
