@@ -19,16 +19,26 @@ namespace krkit_Backend.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        // Ürünleri listeleme (GET)
-        [HttpGet]
-        public async Task<IActionResult> GetAllProducts()
+        [HttpPost]
+        public async Task<IActionResult> GetAllProducts( GetProductByFilterRequestDto dto)
         {
-            var products = await _unitOfWork.Products.GetAllAsync();
+            IEnumerable<Product> products;
+
+            if (string.IsNullOrEmpty(dto.Barcode))
+            {
+                products = await _unitOfWork.Products.GetAllAsync();
+            }
+            else
+            {
+                products = await _unitOfWork.Products.FindAsync(p => p.Barcode == dto.Barcode);
+            }
+
             return Ok(products);
         }
 
+
         // Ürün ekleme (POST)
-            [HttpPost("add")]
+        [HttpPost("add")]
         public async Task<IActionResult> AddProduct([FromBody] AddProductRequestDto productRequest)
         {
             if (productRequest == null || string.IsNullOrEmpty(productRequest.CompanyName) ||
@@ -63,7 +73,7 @@ namespace krkit_Backend.Controllers
         }
 
 
-        // Belirli bir ürünü barkod numarasına göre getirme (GET)
+        // Belirli bir ürünü barkod numarasına göre getirme (GET) CHATTEN
         [HttpGet("select")]
         public async Task<IActionResult> GetProductByBarcode(string barcode)
         {
