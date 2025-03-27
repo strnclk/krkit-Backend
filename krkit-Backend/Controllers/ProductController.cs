@@ -20,22 +20,24 @@ namespace krkit_Backend.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> GetAllProducts( GetProductByFilterRequestDto dto)
+        public async Task<IActionResult> GetAllProducts(GetProductByFilterRequestDto dto)
         {
             IEnumerable<Product> products;
 
             if (string.IsNullOrEmpty(dto.Barcode))
             {
-                products = await _unitOfWork.Products.GetAllAsync();
+                // Tüm ürünleri getir, ancak FKS ile başlayanları hariç tut
+                products = await _unitOfWork.Products.FindAsync(p => !p.Barcode.StartsWith("FKS"));
             }
             else
             {
-                products = await _unitOfWork.Products.FindAsync(p => p.Barcode == dto.Barcode);
+                // Eğer barkod filtresi varsa, FKS ile başlamayan ve filtrelenen barkoda uyanları getir
+                products = await _unitOfWork.Products.FindAsync(p =>
+                    p.Barcode == dto.Barcode && !p.Barcode.StartsWith("FKS"));
             }
 
             return Ok(products);
         }
-
 
         // Ürün ekleme (POST)
         [HttpPost("add")]
